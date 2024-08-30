@@ -6,7 +6,7 @@ import { historyFromJSON } from "@temporalio/common/lib/proto-utils"
 import { temporal } from "@temporalio/proto"
 import { Connection, LOCAL_TARGET } from "@temporalio/client"
 import { Server } from "./server"
-import { getBaseConfiguration } from "./get-base-configuration"
+import { getConfiguration } from "./get-base-configuration"
 
 interface StartFromId {
   namespace?: string
@@ -310,9 +310,18 @@ export class HistoryDebuggerPanel {
       await vscode.commands.executeCommand("workbench.action.splitEditorLeft")
     }
 
-    const baseConfig = await getBaseConfiguration()
-    // So this can be used with the TypeScript SDK
-    if (process.env.TEMPORAL_DEBUGGER_EXTENSION_DEV_MODE) {
+    ///
+
+    let lang = "unknown"
+    await vscode.workspace.openTextDocument(replayerEndpoint).then((doc) => {
+      lang = doc.languageId
+      console.log(lang)
+    })
+
+    ///
+    const baseConfig = await getConfiguration(lang)
+
+    if (process.env.TEMPORAL_DEBUGGER_EXTENSION_DEV_MODE && lang === "typescript") {
       baseConfig.skipFiles.push("${workspaceFolder}/packages/worker/src/**")
     }
     // NOTE: Adding NODE_PATH below in case ts-node is not an installed dependency in the workspace.
